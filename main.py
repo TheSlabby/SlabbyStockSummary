@@ -1,31 +1,40 @@
 from APIClient import APIClient
 from Database import Database
-from Graph import Graph
-import os
+from StockPlotter import StockPlotter
+import os, argparse
 
+
+# first parse arguments
+parser = argparse.ArgumentParser(description="Plot stock data")
+parser.add_argument('symbol', type=str, help='Stock symbol to plot')
+parser.add_argument('--refresh', action=argparse.BooleanOptionalAction, default=True,
+                    help='Send API request to AlphaVantage to refresh local db')
+args = parser.parse_args()
+
+SYMBOL = args.symbol
+REFRESH_DATA = args.refresh
+
+# now get constants & other info
 API_KEY = os.getenv('API_KEY')
 SQLITE_FILE = 'stocks.sqlite'
-REFRESH_DATA = True
 
 client = APIClient(API_KEY)
 db = Database(SQLITE_FILE)
-graph = Graph(db)
+plotter = StockPlotter(db)
 
-# get intraday data, and put it into sqlite
-symbol = 'MSFT'
 
 # fetch new data
 if REFRESH_DATA:
     try:
-        print('Refreshing:', symbol)
-        intraday_data = client.get_intraday(symbol)
+        print('Refreshing:', SYMBOL)
+        intraday_data = client.get_intraday(SYMBOL)
         for key in intraday_data.keys():
-            db.add_stock(symbol, key, intraday_data[key]['1. open'], intraday_data[key]['2. high'],
+            db.add_stock(SYMBOL, key, intraday_data[key]['1. open'], intraday_data[key]['2. high'],
                          intraday_data[key]['3. low'],
                          intraday_data[key]['4. close'], intraday_data[key]['5. volume'])
     except:
         print("Can't refresh (maybe no more requests)")
 
 # plot
-print('\nPlotting', symbol)
-graph.plot_symbol(symbol, today=True)
+print('\nPlotting', SYMBOL)
+plotter.plot_symbol(SYMBOL, today=True)

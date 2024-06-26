@@ -4,7 +4,7 @@ from datetime import datetime
 from Database import Database
 
 
-class Graph:
+class StockPlotter:
     def __init__(self, db: Database):
         self.db = db
 
